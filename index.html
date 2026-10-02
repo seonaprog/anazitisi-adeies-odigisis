@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ΣΩΜΑΤΕΙΟ ΕΚΠΑΙΔΕΥΤΩΝ ΟΔΗΓΗΣΗΣ - Αναζήτηση Αδειών Οδήγησης</title>
+<style>
+  :root{
+    --bg:#f7f7f8; --panel:#ffffff; --text:#1a1a1a; --muted:#6b6b70;
+    --border:#e2e2e6; --accent:#2f6fed; --accent-ink:#ffffff;
+    --ok-bg:#e7f6ec; --ok-ink:#1c7a3c; --bad-bg:#fdecec; --bad-ink:#c0392b;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#17181c; --panel:#202127; --text:#eceef1; --muted:#9a9ca3;
+      --border:#33343b; --accent:#5a8dfd; --accent-ink:#0d1220;
+      --ok-bg:#123a22; --ok-ink:#7be0a0; --bad-bg:#3a1616; --bad-ink:#ff9a8b;
+      --shadow:0 1px 3px rgba(0,0,0,0.4);
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    padding:16px; min-height:100vh;
+  }
+  .wrap{max-width:820px; margin:0 auto;}
+  .org-title{
+    font-size:0.78rem; font-weight:700; letter-spacing:0.02em; color:var(--muted);
+    text-transform:uppercase; line-height:1.4; margin-bottom:6px;
+  }
+  h1{font-size:1.25rem; margin:0 0 4px 0;}
+  .sub{color:var(--muted); font-size:0.9rem; margin-bottom:16px;}
+  .panel{
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:18px; box-shadow:var(--shadow); margin-bottom:16px;
+  }
+  .date-range-banner{
+    background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:10px 14px; margin-bottom:16px;
+    font-size:0.86rem; font-weight:600; color:var(--accent);
+  }
+  label{display:block; font-size:0.85rem; font-weight:600; margin-bottom:4px;}
+  textarea{
+    width:100%; min-height:150px; resize:vertical; padding:9px 10px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg); color:var(--text); font-size:0.85rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; line-height:1.5;
+  }
+  .hint{font-size:0.78rem; color:var(--muted); margin-top:4px;}
+  button.primary{
+    margin-top:14px; background:var(--accent); color:var(--accent-ink); border:none;
+    padding:10px 18px; border-radius:8px; font-weight:700; font-size:0.92rem; cursor:pointer;
+  }
+  button.secondary{
+    margin-top:12px; background:transparent; color:var(--accent); border:1px solid var(--accent);
+    padding:9px 16px; border-radius:8px; font-weight:600; font-size:0.88rem; cursor:pointer;
+  }
+  .msg{margin-top:10px; font-size:0.85rem; padding:8px 10px; border-radius:8px;}
+  .msg.ok{background:var(--ok-bg); color:var(--ok-ink);}
+  .msg.bad{background:var(--bad-bg); color:var(--bad-ink);}
+  table{width:100%; border-collapse:collapse; margin-top:14px; font-size:0.86rem;}
+  .table-wrap{overflow-x:auto;}
+  th, td{text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); white-space:nowrap;}
+  th{color:var(--muted); font-weight:600; font-size:0.76rem; text-transform:uppercase; letter-spacing:0.03em;}
+  .status-found{color:var(--ok-ink); font-weight:700;}
+  .status-notfound{color:var(--bad-ink); font-weight:700;}
+  .status-warn{color:#a04d00; font-weight:700;}
+  .footer-note{font-size:0.72rem; color:var(--muted); text-align:center; margin-top:20px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="org-title">ΣΩΜΑΤΕΙΟ ΕΚΠΑΙΔΕΥΤΩΝ ΟΔΗΓΗΣΗΣ ΚΑΙ ΚΥΚΛΟΦΟΡΙΑΚΗΣ ΑΓΩΓΗΣ<br>ΝΟΤΙΟΣ ΤΟΜΕΑΣ ΠΕΡΙΦΕΡΕΙΑ ΑΤΤΙΚΗΣ</div>
+  <h1>🔍 Αναζήτηση Αδειών Οδήγησης</h1>
+  <div class="sub">Αναζήτηση ανά όνομα ή αριθμό ΑΟ για σχολές οδηγών</div>
+
+  <div class="date-range-banner" id="date-range-info">Φόρτωση εύρους ημερομηνιών...</div>
+
+  <div class="panel">
+    <label>Επικόλληση λίστας για αναζήτηση (μία εγγραφή ανά γραμμή)</label>
+    <textarea id="search-text" placeholder="Ονοματεπώνυμο, Αριθμός ΑΟ (αν γνωστός), ΑΦΜ ή Αρ. Πρωτοκόλλου (αν δεν γνωρίζετε τον ΑΟ)
+π.χ.
+ΠΑΠΑΔΟΠΟΥΛΟΣ ΓΙΑΝΝΗΣ, 123456
+ΝΙΚΟΛΑΟΥ ΜΑΡΙΑ
+, 123457"></textarea>
+    <div class="hint">Μορφή ανά γραμμή: <b>Ονοματεπώνυμο, Αριθμός ΑΟ, ΑΦΜ/Αρ. Πρωτοκόλλου</b> (χωρισμένα με κόμμα ή Tab). Μπορείτε να συμπληρώσετε μόνο το όνομα, μόνο τον αριθμό ΑΟ (χωρίς κόμμα μπροστά, π.χ. απλά <b>560308298</b>), ή και τα δύο μαζί.</div>
+    <button class="primary" id="search-submit">Αναζήτηση</button>
+    <div id="search-msg"></div>
+    <div id="search-results"></div>
+  </div>
+
+  <div class="footer-note" id="data-updated-note"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  let DATA = [];
+  let DATA_UPDATED = "";
+
+  function normalize(s){
+    return (s || "").toString()
+      .toUpperCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+  function tokenKey(name){
+    return normalize(name).split(" ").filter(Boolean).sort().join(" ");
+  }
+  function formatDMY(iso){
+    if (!iso) return "";
+    const parts = (iso+"").split("-");
+    if (parts.length !== 3) return iso;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  function escapeHtml(s){
+    return (s===undefined||s===null?"":s).toString()
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+  function setMsg(el, text, ok){
+    el.innerHTML = `<div class="msg ${ok?"ok":"bad"}">${text}</div>`;
+  }
+
+  // ---------- date range banner ----------
+  function renderDateRangeInfo(){
+    const el = $("date-range-info");
+    const dates = DATA.map(d=>d.dateISO).filter(Boolean);
+    if (!dates.length){
+      el.textContent = "Δεν υπάρχουν ακόμη καταχωρημένα δεδομένα.";
+      return;
+    }
+    const minD = dates.reduce((a,b)=> a < b ? a : b);
+    const maxD = dates.reduce((a,b)=> a > b ? a : b);
+    el.textContent = `📅 Διαθέσιμες άδειες στη βάση από ${formatDMY(minD)} έως ${formatDMY(maxD)}. Αναζητήσεις για ΑΟ εκτός αυτού του εύρους δεν θα βρεθούν.`;
+  }
+
+  async function initData(){
+    try{
+      const res = await fetch("data.json", { cache: "no-store" });
+      if (!res.ok) throw new Error("http " + res.status);
+      const json = await res.json();
+      DATA = json.data || [];
+      DATA_UPDATED = json.updated || "";
+    }catch(e){
+      DATA = [];
+      DATA_UPDATED = "";
+      $("date-range-info").textContent = "⚠️ Δεν ήταν δυνατή η φόρτωση των δεδομένων. Βεβαιωθείτε ότι το αρχείο data.json βρίσκεται στον ίδιο φάκελο με αυτή τη σελίδα.";
+      return;
+    }
+    renderDateRangeInfo();
+    if (DATA_UPDATED){
+      $("data-updated-note").textContent = `Τα δεδομένα ενημερώθηκαν στις ${DATA_UPDATED}.`;
+    }
+  }
+  initData();
+
+  // ---------- index ----------
+  function buildIndex(){
+    const idx = new Map();
+    const aoIndex = new Map();
+    DATA.forEach(e=>{
+      const key = tokenKey(e.name);
+      const nAo = normalize(e.ao);
+      const rec = { name: e.name, ao: e.ao, dateISO: e.dateISO, label: e.label };
+      if (key){
+        if (!idx.has(key)) idx.set(key, []);
+        idx.get(key).push(rec);
+      }
+      if (nAo){
+        if (!aoIndex.has(nAo)) aoIndex.set(nAo, []);
+        aoIndex.get(nAo).push(rec);
+      }
+    });
+    return { idx, aoIndex };
+  }
+
+  // ---------- local (per-browser) "searched before" log ----------
+  function loadPriorFound(){
+    try{
+      return JSON.parse(localStorage.getItem("priorFoundLog") || "[]");
+    }catch(e){ return []; }
+  }
+  function savePriorFound(items){
+    try{
+      const log = loadPriorFound();
+      const now = Date.now();
+      items.forEach(it => log.push({ key: it.key, ao: it.ao, searchedAt: now }));
+      localStorage.setItem("priorFoundLog", JSON.stringify(log.slice(-2000)));
+    }catch(e){ /* ignore */ }
+  }
+  function buildPriorFoundIndex(){
+    const m = new Map();
+    loadPriorFound().forEach(it=>{
+      const k = it.key + "|" + it.ao;
+      if (!m.has(k)) m.set(k, []);
+      m.get(k).push(it.searchedAt);
+    });
+    return m;
+  }
+
+  let lastSearchResults = [];
+
+  $("search-submit").addEventListener("click", ()=>{
+    const { idx, aoIndex } = buildIndex();
+    const priorFound = buildPriorFoundIndex();
+
+    const lines = $("search-text").value.split("\n").map(l=>l.trim()).filter(Boolean);
+    if (!lines.length){
+      setMsg($("search-msg"), "Γράψτε τουλάχιστον μία εγγραφή προς αναζήτηση.", false);
+      $("search-results").innerHTML = "";
+      return;
+    }
+    $("search-msg").innerHTML = "";
+
+    const results = [];
+    const logItems = [];
+
+    lines.forEach(line=>{
+      const parts = line.split(/[,\t]+/).map(p=>p.trim());
+      let qName = parts[0] || "";
+      let qAo = parts[1] || "";
+      const qAlt = parts[2] || "";
+
+      if (!qAo && qName && /^\d{5,10}[A-Za-zΑ-Ωα-ω]?$/.test(qName)){
+        qAo = qName;
+        qName = "";
+      }
+
+      const key = tokenKey(qName);
+      if (!key && !qAo) return;
+
+      if (!key && qAo){
+        const nAo = normalize(qAo);
+        const matches = aoIndex.get(nAo) || [];
+        if (matches.length){
+          const dates = [...new Set(matches.map(m=>m.dateISO))];
+          const distinctNames = [...new Set(matches.map(m=>tokenKey(m.name)))];
+          let status;
+          if (matches.length > 1 || dates.length > 1){
+            status = "Διπλοεγγραφή";
+          } else {
+            const priorTimes = priorFound.get(tokenKey(matches[0].name) + "|" + nAo) || [];
+            status = priorTimes.length ? "Έχει βρεθεί παλαιότερα" : "Βρέθηκε";
+          }
+          const seen = new Set();
+          matches.forEach(m=>{
+            const sig = m.dateISO + "|" + m.name;
+            if (seen.has(sig)) return;
+            seen.add(sig);
+            results.push({ name: m.name, dateISO: m.dateISO, ao: m.ao, status,
+              note: distinctNames.length > 1 ? "Προσοχή: ο ίδιος ΑΟ βρέθηκε με διαφορετικό όνομα σε άλλη εγγραφή" : "" });
+          });
+          logItems.push({ key: tokenKey(matches[0].name), ao: nAo });
+        } else {
+          results.push({ name: "", dateISO: "", ao: qAo, status: "Δεν βρέθηκε", note: "" });
+        }
+        return;
+      }
+
+      const allMatches = idx.get(key) || [];
+
+      if (qAo){
+        const nAo = normalize(qAo);
+        const aoMatches = allMatches.filter(m => normalize(m.ao) === nAo);
+        if (aoMatches.length){
+          const dates = [...new Set(aoMatches.map(m=>m.dateISO))];
+          let status;
+          if (aoMatches.length > 1 || dates.length > 1){
+            status = "Διπλοεγγραφή";
+          } else {
+            const priorTimes = priorFound.get(key + "|" + nAo) || [];
+            status = priorTimes.length ? "Έχει βρεθεί παλαιότερα" : "Βρέθηκε";
+          }
+          const seenDates = new Set();
+          aoMatches.forEach(m=>{
+            if (seenDates.has(m.dateISO)) return;
+            seenDates.add(m.dateISO);
+            results.push({ name: m.name, dateISO: m.dateISO, ao: m.ao, status, note: "" });
+          });
+          logItems.push({ key, ao: nAo });
+        } else if (allMatches.length){
+          const alt = allMatches[0];
+          results.push({ name: qName, dateISO: "", ao: "", status: "Δεν βρέθηκε",
+            note: `Υπάρχει άλλη εγγραφή με ίδιο όνομα — ΑΟ: ${alt.ao}, ημ.: ${formatDMY(alt.dateISO)}${qAlt ? " (επιβεβαιώστε με "+qAlt+")" : ""}` });
+        } else {
+          results.push({ name: qName, dateISO: "", ao: "", status: "Δεν βρέθηκε", note: "" });
+        }
+      } else {
+        if (!allMatches.length){
+          results.push({ name: qName, dateISO: "", ao: "", status: "Δεν βρέθηκε", note: "" });
+          return;
+        }
+        const distinctAo = [...new Set(allMatches.map(m=>normalize(m.ao)))];
+        if (distinctAo.length > 1){
+          allMatches.forEach(m=>{
+            results.push({ name: m.name, dateISO: m.dateISO, ao: m.ao,
+              status: "Πολλαπλά αποτελέσματα",
+              note: qAlt ? `Επιβεβαιώστε με: ${qAlt}` : "Ομώνυμες εγγραφές — χρειάζεται επιβεβαίωση" });
+          });
+        } else {
+          const nAo = distinctAo[0];
+          const dates = [...new Set(allMatches.map(m=>m.dateISO))];
+          let status;
+          if (allMatches.length > 1 || dates.length > 1){
+            status = "Διπλοεγγραφή";
+          } else {
+            const priorTimes = priorFound.get(key + "|" + nAo) || [];
+            status = priorTimes.length ? "Έχει βρεθεί παλαιότερα" : "Βρέθηκε";
+          }
+          const seenDates = new Set();
+          allMatches.forEach(m=>{
+            if (seenDates.has(m.dateISO)) return;
+            seenDates.add(m.dateISO);
+            results.push({ name: m.name, dateISO: m.dateISO, ao: m.ao, status, note: "" });
+          });
+          logItems.push({ key, ao: nAo });
+        }
+      }
+    });
+
+    lastSearchResults = results;
+
+    let rowsHtml = "";
+    results.forEach(r=>{
+      let cls = "status-found", icon = "✔";
+      if (r.status === "Δεν βρέθηκε"){ cls = "status-notfound"; icon = "✖"; }
+      else if (r.status === "Διπλοεγγραφή" || r.status === "Πολλαπλά αποτελέσματα" || r.status === "Έχει βρεθεί παλαιότερα"){ cls = "status-warn"; icon = "⚠"; }
+      rowsHtml += `<tr>
+        <td>${escapeHtml(r.name)}</td>
+        <td>${escapeHtml(formatDMY(r.dateISO))}</td>
+        <td>${escapeHtml(r.ao)}</td>
+        <td class="${cls}">${icon} ${escapeHtml(r.status)}</td>
+        <td>${escapeHtml(r.note || "")}</td>
+      </tr>`;
+    });
+
+    $("search-results").innerHTML = `
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ονοματεπώνυμο</th><th>Ημερομηνία εισόδου</th><th>Αριθμός ΑΟ</th><th>Ένδειξη</th><th>Σημείωση</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+      </div>
+      <button class="secondary" id="export-search-csv">⬇️ Εξαγωγή αποτελεσμάτων (CSV)</button>
+    `;
+
+    const foundCount = results.filter(r=>r.status !== "Δεν βρέθηκε").length;
+    setMsg($("search-msg"), `Επεξεργάστηκαν ${lines.length} γραμμές — ${foundCount} βρέθηκαν.`, true);
+
+    if (logItems.length) savePriorFound(logItems);
+
+    const exportBtn = document.getElementById("export-search-csv");
+    if (exportBtn) exportBtn.addEventListener("click", ()=>{
+      let csv = "\uFEFF" + "Ονοματεπώνυμο;Ημερομηνία εισόδου;Αριθμός ΑΟ;Ένδειξη\n";
+      lastSearchResults.forEach(r=>{
+        csv += [r.name, formatDMY(r.dateISO), r.ao, r.status].map(v => `"${(v+"").replace(/"/g,'""')}"`).join(";") + "\n";
+      });
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "apotelesmata-anazitisis.csv";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  });
+})();
+</script>
+</body>
+</html>
